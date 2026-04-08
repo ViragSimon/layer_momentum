@@ -49,6 +49,7 @@ CLAUDE.md
 results/*.pkl
 results/*.log
 results/log.txt
+results_smoke/
 nohup.out
 
 # ─── Datasets / large binaries ───────────────────────────────────────────

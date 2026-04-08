@@ -77,12 +77,18 @@ def run_single(config: ExperimentConfig) -> dict:
     server_app = ServerApp(server_fn=server_fn)
     client_app = ClientApp(client_fn=client_fn)
 
+    # On a single CUDA GPU, reserve the whole device per client so Ray
+    # serializes clients onto it instead of letting them collide. On MPS / CPU
+    # Ray's GPU scheduler is irrelevant, so 0.0 is correct (and lets Ray run
+    # clients in parallel up to num_cpus).
+    num_gpus = 1.0 if DEVICE.type == "cuda" else 0.0
+
     start = time.time()
     run_simulation(
         server_app=server_app,
         client_app=client_app,
         num_supernodes=config.num_clients,
-        backend_config={"client_resources": {"num_cpus": 1, "num_gpus": 0.0}},
+        backend_config={"client_resources": {"num_cpus": 1, "num_gpus": num_gpus}},
     )
     elapsed = time.time() - start
 
@@ -223,6 +229,14 @@ def main():
                         help="Filter to runs of this strategy only")
     parser.add_argument("--seeds", type=int, nargs="*", default=[42, 123, 456])
     parser.add_argument("--output-dir", type=str, default="results")
+    parser.add_argument("--rounds", type=int, default=None,
+                        help="Override num_rounds on every config (for smoke tests)")
+    parser.add_argument("--local-epochs", type=int, default=None,
+                        help="Override local_epochs on every config (for smoke tests)")
+    parser.add_argument("--warmup-rounds", type=int, default=None,
+                        help="Override warmup_rounds on every config (for smoke tests)")
+    parser.add_argument("--rounds-per-layer", type=int, default=None,
+                        help="Override rounds_per_layer on every config (for smoke tests)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -237,6 +251,18 @@ def main():
         configs = fn(args.seeds)
         if args.strategy:
             configs = [c for c in configs if c.strategy == args.strategy]
+        if args.rounds is not None:
+            for c in configs:
+                c.num_rounds = args.rounds
+        if args.local_epochs is not None:
+            for c in configs:
+                c.local_epochs = args.local_epochs
+        if args.warmup_rounds is not None:
+            for c in configs:
+                c.warmup_rounds = args.warmup_rounds
+        if args.rounds_per_layer is not None:
+            for c in configs:
+                c.rounds_per_layer = args.rounds_per_layer
         _run_experiment(n, configs, args.output_dir)
 
 
