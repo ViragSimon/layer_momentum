@@ -13,6 +13,7 @@ Usage
 """
 
 import argparse
+import gc
 import logging
 import os
 import pickle
@@ -20,6 +21,8 @@ import sys
 import time
 from dataclasses import asdict
 from typing import List
+
+import torch
 
 # Make `src` importable from the experiments folder
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -137,6 +140,14 @@ def _run_experiment(exp_num: int, configs: List[ExperimentConfig], output_dir: s
         except Exception as e:
             print(f" ✗ FAILED {cfg.strategy} seed={cfg.seed}: {e}")
             continue
+        finally:
+            # Aggressively reclaim memory between runs so Ray workers have
+            # headroom on low-RAM nodes (e.g. Colab free tier). Without this,
+            # driver + leftover actor state accumulates across strategies
+            # until the OOMKiller starts slaughtering Flower workers mid-fit.
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
 
 # ── Experiment definitions ────────────────────────────────────────────────
@@ -237,6 +248,9 @@ def main():
                         help="Override warmup_rounds on every config (for smoke tests)")
     parser.add_argument("--rounds-per-layer", type=int, default=None,
                         help="Override rounds_per_layer on every config (for smoke tests)")
+    parser.add_argument("--num-clients", type=int, default=None,
+                        help="Override num_clients on every config (use smaller values "
+                             "on low-RAM nodes like Colab free tier)")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -263,6 +277,9 @@ def main():
         if args.rounds_per_layer is not None:
             for c in configs:
                 c.rounds_per_layer = args.rounds_per_layer
+        if args.num_clients is not None:
+            for c in configs:
+                c.num_clients = args.num_clients
         _run_experiment(n, configs, args.output_dir)
 
 
