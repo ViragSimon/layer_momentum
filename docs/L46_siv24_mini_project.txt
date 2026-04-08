@@ -1,0 +1,4 @@
+Mini project document
+CRSID: SIV24
+
+Link to GitHub: https://github.com/ViragSimon/L46_Project

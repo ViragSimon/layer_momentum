@@ -1,0 +1,64 @@
+# ─── Python ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ─── Virtual environments ────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ─── Environment / secrets ───────────────────────────────────────────────
+.env
+.env.*
+*.key
+*.pem
+
+# ─── OS junk ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ─── Editors / IDEs ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Local agent / scratch ───────────────────────────────────────────────
+.claude/
+claude_pompts/
+claude_prompts/
+CLAUDE.md
+
+# ─── Experiment outputs (regenerable) ────────────────────────────────────
+results/*.pkl
+results/*.log
+results/log.txt
+nohup.out
+
+# ─── Datasets / large binaries ───────────────────────────────────────────
+data/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.tar.gz
+
+# ─── HuggingFace / Flower caches ─────────────────────────────────────────
+.cache/
+flwr_cache/
